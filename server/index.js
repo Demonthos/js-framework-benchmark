@@ -65,6 +65,14 @@ async function loadFrameworkInfo(keyedDir, directoryName) {
     return result;
   }
 
+function isFrameworkDir(keyedDir, directoryName) {
+  const frameworkPath = path.resolve(frameworkDirectory, keyedDir, directoryName);
+  const packageJSONPath = path.resolve(frameworkPath, "package.json");  
+  const packageLockJSONPath = path.resolve(frameworkPath, "package-lock.json");  
+  const exists = fs.existsSync(packageJSONPath) && fs.existsSync(packageLockJSONPath);
+  return exists;
+}
+
 async function loadFrameworkVersionInformation(filterForFramework) {
     // let matchesDirectoryArg = (directoryName) =>
     // frameworkArgument.length == 0 || frameworkArgument.some((arg: string) => arg == directoryName);
@@ -76,8 +84,10 @@ async function loadFrameworkVersionInformation(filterForFramework) {
       for (let directory of directories) {
         let pathInFrameworksDir = keyedType + "/" + directory;
         if (!filterForFramework || filterForFramework===pathInFrameworksDir) {
-          let fi = loadFrameworkInfo(keyedType, directory);
-          resultsProm.push(fi);
+          if (isFrameworkDir(keyedType, directory)) {
+            let fi = loadFrameworkInfo(keyedType, directory);
+            resultsProm.push(fi);
+          }
         }
       }
     }
@@ -96,7 +106,9 @@ app.use(addSiteIsolationForIndex);
 app.use('/frameworks', express.static(frameworkDirectory))
 app.use('/webdriver-ts-results', express.static(webDriverResultDirectory))
 app.use('/css', express.static(path.join(frameworkDirectory, '..', 'css')))
-
+app.get('/index.html', async (req, res, next) => {
+  res.sendFile(path.join(__dirname,'..', 'index.html'));
+})
 app.get('/ls', async (req, res) => {
     let t0 = Date.now();
     let frameworks = await loadFrameworkVersionInformation();

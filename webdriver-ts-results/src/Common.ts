@@ -188,6 +188,7 @@ export class ResultTableData {
     // benchmarksMEM: Array<Benchmark>;
     // Columns
     frameworks: Array<Framework>;
+    frameworksForFactors: Array<Framework>;
     selectedFameworks: Set<Framework>;
     // Cell data
     // resultsCPU: Array<Array<TableResultValueEntry|null>>;   // [benchmark][framework]
@@ -221,9 +222,9 @@ export class ResultTableData {
           }
         })
         this.frameworks = this.allFrameworks.filter(framework => framework.type === type && this.selectedFameworks.has(framework));
+        this.frameworksForFactors = this.allFrameworks.filter(framework => framework.type === type 
+            && framework.issues.every(i => allowedIssues.has(i)));
         this.update(sortKey);
-
-
     }
     private update(sortKey: string) {
         console.time("update");
@@ -334,7 +335,8 @@ export class ResultTableData {
     }
 
     computeFactors(benchmark: Benchmark): Array<TableResultValueEntry|null> {
-        const benchmarkResults = this.frameworks.map(f => this.results(benchmark, f));
+        debugger;
+        const benchmarkResults = this.frameworksForFactors.map(f => this.results(benchmark, f));
         const selectFn = (result: Result|null) => {
             if (result===null) return 0;
             if (this.displayMode === DisplayMode.DisplayMedian) {
@@ -343,13 +345,19 @@ export class ResultTableData {
                 return result.mean;
             }
         }
-        const min = benchmarkResults.reduce((min, result) => result===null ? min : Math.min(min, selectFn(result)), Number.POSITIVE_INFINITY);
+        const min = Math.max(benchmarkResults.reduce((min, result) => result===null ? min : Math.min(min, selectFn(result)), Number.POSITIVE_INFINITY));
+        // if (benchmark.type === BenchmarkType.CPU) {
+        //     min = Math.max(1000/60, min);
+        // }
         return this.frameworks.map(f => {
             const result = this.results(benchmark, f);
             if (result === null) return null;
 
             const value = selectFn(result);
             const factor = value/min;
+            // if (benchmark.type === BenchmarkType.CPU) {
+            //     factor = Math.max(1, factor);
+            // }    
             const conficenceInterval = 1.959964 * (result.standardDeviation || 0) / Math.sqrt(result.values.length);
             const conficenceIntervalStr = benchmark.type === BenchmarkType.MEM ? null : conficenceInterval.toFixed(1);
             const formattedValue = formatEn.format(value);
