@@ -8,7 +8,8 @@ edition = "2021"
 [dependencies]
 dioxus = { git = "https://github.com/dioxuslabs/dioxus.git" }
 dioxus-web = { git = "https://github.com/dioxuslabs/dioxus.git" }
-smallvec = "1.9.0"
+# dioxus = { path = "c:/users/desktop/github/dioxus/packages/dioxus" }
+# dioxus-web = { path = "c:/users/desktop/github/dioxus/packages/web" }
 
 wasm-bindgen = { version = "*" }
 js-sys = "*"

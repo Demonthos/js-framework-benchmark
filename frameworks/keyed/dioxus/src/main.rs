@@ -2,7 +2,6 @@
 
 use dioxus::prelude::*;
 use js_sys::Math;
-use smallvec::{smallvec, SmallVec};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -22,7 +21,7 @@ fn main() {
 #[derive(Clone, Debug, PartialEq)]
 struct Label {
     key: usize,
-    labels: SmallVec<[&'static str; 3]>,
+    labels: Vec<&'static str>,
 }
 
 impl Label {
@@ -31,7 +30,7 @@ impl Label {
         for x in 0..num {
             labels.push(Label {
                 key: x as usize + key_from,
-                labels: smallvec![
+                labels: vec![
                     ADJECTIVES[random((ADJECTIVES.len() - 1) as f64)],
                     COLOURS[random((COLOURS.len() - 1) as f64)],
                     NOUNS[random((NOUNS.len() - 1) as f64)],
