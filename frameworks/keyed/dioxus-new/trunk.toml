@@ -1,0 +1,5 @@
+[build]
+target = "trunk.html"
+dist = "bundled-dist"
+public_url = "/frameworks/keyed/dioxus-new/bundled-dist/"
+filehash = false

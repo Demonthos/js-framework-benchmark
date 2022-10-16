@@ -1,0 +1,20 @@
+[package]
+name = "dioxus_benchmark"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# dioxus = { git = "https://github.com/dioxuslabs/dioxus.git" }
+# dioxus-web = { git = "https://github.com/dioxuslabs/dioxus.git" }
+dioxus = { path = "c:/users/desktop/github/dioxus/packages/dioxus" }
+dioxus-web = { path = "c:/users/desktop/github/dioxus/packages/web" }
+
+wasm-bindgen = { version = "*" }
+js-sys = "*"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
