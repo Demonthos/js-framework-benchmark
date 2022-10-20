@@ -4,7 +4,7 @@ However, if you do want to compile it, you will need the following:
 
 * [Rust](https://www.rust-lang.org/tools/install)
 
-* [wasm-pack](https://rustwasm.github.io/wasm-pack/)
+* [truk](https://trunkrs.dev/)
 
 After installing those, run these commands:
 

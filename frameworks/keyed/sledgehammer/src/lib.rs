@@ -1,10 +1,11 @@
+use fast_dom::element::Element;
 use fast_dom::*;
 use js_sys::Math;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{Document, Event, Node};
+use web_sys::Event;
 
 const ADJECTIVES_LEN: usize = 25;
 const ADJECTIVES_LEN_F64: f64 = ADJECTIVES_LEN as f64;
@@ -79,16 +80,16 @@ struct Main {
     last_id: usize,
     rows: usize,
     selected: Option<u64>,
+    msg: MsgBuilder,
 }
 
 fn get_parent_id(el: web_sys::Element) -> Option<usize> {
     let mut current = Some(el);
     while let Some(e) = current {
         if e.tag_name() == "TR" {
-            return match e.get_attribute("data-id") {
-                Some(id) => Some(id.parse::<usize>().unwrap()),
-                None => None,
-            };
+            return e
+                .get_attribute("data-id")
+                .map(|id| id.parse::<usize>().unwrap());
         }
         current = e.parent_element();
     }
@@ -96,47 +97,45 @@ fn get_parent_id(el: web_sys::Element) -> Option<usize> {
 }
 
 impl Main {
-    fn run(&mut self) -> Result<(), JsValue> {
+    fn run(&mut self) {
         self.clear();
         self.append_rows(1000)
     }
 
-    fn add(&mut self) -> Result<(), JsValue> {
+    fn add(&mut self) {
         self.append_rows(1000)
     }
 
     fn update(&mut self) {
         let mut i = 0;
         let l = self.data.len();
-        let mut msg = MsgBuilder::new();
         while i < l {
             let row = &mut self.data[i];
             row.label.push_str(" !!!");
-            msg.set_text(row.label.as_str(), row.label_node());
+            self.msg
+                .set_text(format_args!("{}", row.label), Some(row.label_node()));
             i += 10;
         }
-        msg.build();
+        self.msg.flush();
     }
 
     fn unselect(&mut self) {
         if let Some(el) = self.selected.take() {
-            let mut msg = MsgBuilder::new();
-            msg.remove_attribute(Attribute::class, el);
-            msg.build();
+            self.msg.remove_attribute(Attribute::class, Some(el));
         }
     }
 
     fn select(&mut self, id: usize) {
         self.unselect();
-        let mut msg = MsgBuilder::new();
         for row in &self.data {
             if row.id == id {
-                msg.set_attribute(Attribute::class, &"danger", row.el());
-                self.selected = Some(row.el().clone());
+                self.msg
+                    .set_attribute(Attribute::class, format_args!("danger"), Some(row.el()));
+                self.selected = Some(row.el());
+                self.msg.flush();
                 return;
             }
         }
-        msg.build();
     }
 
     fn delete(&mut self, id: usize) {
@@ -144,99 +143,92 @@ impl Main {
             Some(i) => self.data.remove(i),
             None => return,
         };
-        let mut msg = MsgBuilder::new();
-        msg.remove(row.el());
-        msg.build();
+        self.msg.remove(Some(row.el()));
+        self.msg.flush();
         self.rows -= 1;
     }
 
     fn clear(&mut self) {
         self.data = Vec::new();
-        let mut msg = MsgBuilder::new();
-        msg.set_text("", TBODY_ID);
-        msg.build();
+        self.msg.set_text(format_args!(""), Some(TBODY_ID));
         self.unselect();
+        self.msg.flush();
         self.rows = 0;
     }
 
-    fn run_lots(&mut self) -> Result<(), JsValue> {
+    fn run_lots(&mut self) {
         self.clear();
         self.append_rows(10000)
     }
 
-    fn swap_rows(&mut self) -> Result<(), JsValue> {
+    fn swap_rows(&mut self) {
         if self.data.len() <= 998 {
-            return Ok(());
+            return;
         }
         let row1 = &self.data[1];
         let row2 = &self.data[2];
         let row998 = &self.data[998];
         let row999 = &self.data[999];
 
-        let mut msg = MsgBuilder::new();
+        self.msg.insert_before(Some(row2.el()), vec![row998.el()]);
+        self.msg.insert_before(Some(row999.el()), vec![row1.el()]);
 
-        msg.insert_before((row998.el(),), row2.el());
-        msg.insert_before((row1.el(),), row999.el());
-
-        msg.build();
+        self.msg.flush();
         self.data.swap(1, 998);
-        Ok(())
     }
 
-    fn append_rows(&mut self, count: usize) -> Result<(), JsValue> {
+    fn append_rows(&mut self, count: usize) {
         // web_sys::console::log_1(&format!("append_rows {}", count).into());
         self.data
             .reserve((count + self.rows).saturating_sub(self.data.capacity()));
-        const BATCH_SIZE: usize = 1;
-        for x in 0..(count / BATCH_SIZE) {
-            let mut msg = MsgBuilder::with(Vec::with_capacity(BATCH_SIZE * 75));
-            for y in 0..BATCH_SIZE {
-                let i = self.rows + y + x * BATCH_SIZE;
-                let id = self.last_id + i + 1;
+        // const BATCH_SIZE: usize = 5000;
+        // for x in 0..(count / BATCH_SIZE) {
+        for x in 0..count {
+            // for y in 0..BATCH_SIZE {
+            // let i = self.rows + y + x * BATCH_SIZE;
+            let i = self.rows + x;
+            let id = self.last_id + i + 1;
 
-                let adjective = ADJECTIVES[random(ADJECTIVES_LEN_F64)];
-                let colour = COLOURS[random(COLOURS_LEN_F64)];
-                let noun = NOUNS[random(NOUNS_LEN_F64)];
-                let capacity = adjective.len() + colour.len() + noun.len() + 2;
-                let mut label = String::with_capacity(capacity);
-                label.push_str(adjective);
-                label.push(' ');
-                label.push_str(colour);
-                label.push(' ');
-                label.push_str(noun);
+            let adjective = ADJECTIVES[random(ADJECTIVES_LEN_F64)];
+            let colour = COLOURS[random(COLOURS_LEN_F64)];
+            let noun = NOUNS[random(NOUNS_LEN_F64)];
+            let capacity = adjective.len() + colour.len() + noun.len() + 2;
+            let mut label = String::with_capacity(capacity);
+            label.push_str(adjective);
+            label.push(' ');
+            label.push_str(colour);
+            label.push(' ');
+            label.push_str(noun);
 
-                let el = i as u64 * 2 + 1 + TEMP_ID;
-                let label_node = el + 1;
-                let id_string = id.to_string();
-                let id_str = id_string.as_str();
-                msg.clone_node(ROW_ID, Some(el));
-                msg.set_attribute("data-id", &id_str, NO_ID);
-                msg.append_children((el,), TBODY_ID);
-                msg.first_child();
-                msg.set_text(&id_str, NO_ID);
-                msg.next_sibling();
-                msg.first_child();
-                msg.store_with_id(label_node);
-                msg.set_text(label.as_str(), NO_ID);
+            let el = i as u64 * 2 + 1 + TEMP_ID;
+            let label_node = el + 1;
+            let id_string = id.to_string();
+            let id_str = id_string.as_str();
+            self.msg.clone_node(Some(ROW_ID), Some(el));
+            self.msg
+                .set_attribute("data-id", format_args!("{}", id_str), NO_ID);
+            self.msg.append_children(Some(TBODY_ID), vec![el]);
+            self.msg.first_child();
+            self.msg.set_text(format_args!("{}", id_str), NO_ID);
+            self.msg.next_sibling();
+            self.msg.first_child();
+            self.msg.store_with_id(label_node);
+            self.msg.set_text(format_args!("{}", label.as_str()), NO_ID);
 
-                let row = Row { id, label, ptr: el };
+            let row = Row { id, label, ptr: el };
 
-                self.data.push(row);
-            }
-            msg.build();
+            self.data.push(row);
         }
+        self.msg.flush();
+        // }
         self.last_id += count;
         self.rows += count;
-        Ok(())
     }
 }
 
-#[wasm_bindgen(start)]
-pub fn main_js() -> Result<(), JsValue> {
-    fast_dom::init();
-
-    let window = web_sys::window().unwrap();
-    let document = window.document().unwrap();
+pub fn main() {
+    let window = web_sys::window().expect("window");
+    let document = window.document().expect("document");
 
     const EL: ElementBuilder<
         Element,
@@ -301,26 +293,26 @@ pub fn main_js() -> Result<(), JsValue> {
         ),
     );
 
-    EL.build();
-
-    let tbody = document.get_element_by_id("tbody").unwrap();
-    set_node(TBODY_ID, tbody.into());
+    let tbody = document.get_element_by_id("tbody").expect("tbody");
+    let mut msg = MsgBuilder::new(tbody.clone());
+    msg.build_full_element(EL);
+    msg.set_node(TBODY_ID, tbody.into());
 
     let main = RefCell::new(Rc::new(Main {
         data: Vec::new(),
         last_id: 0,
         rows: 0,
         selected: None,
+        msg,
     }));
 
-    let main2 = main.clone();
     let onclick = Closure::wrap(Box::new(move |e: Event| {
         let target = match e.target() {
             Some(target) => target,
             None => return,
         };
         let el = JsCast::unchecked_ref::<web_sys::Element>(&target);
-        let mut m = main2.borrow_mut();
+        let mut m = main.borrow_mut();
         let main = match Rc::get_mut(&mut m) {
             Some(main) => main,
             None => return,
@@ -329,11 +321,11 @@ pub fn main_js() -> Result<(), JsValue> {
         match el.id().as_str() {
             "add" => {
                 e.prevent_default();
-                main.add().unwrap();
+                main.add();
             }
             "run" => {
                 e.prevent_default();
-                main.run().unwrap();
+                main.run();
             }
             "update" => {
                 e.prevent_default();
@@ -341,7 +333,7 @@ pub fn main_js() -> Result<(), JsValue> {
             }
             "runlots" => {
                 e.prevent_default();
-                main.run_lots().unwrap();
+                main.run_lots();
             }
             "clear" => {
                 e.prevent_default();
@@ -349,7 +341,7 @@ pub fn main_js() -> Result<(), JsValue> {
             }
             "swaprows" => {
                 e.prevent_default();
-                main.swap_rows().unwrap();
+                main.swap_rows();
             }
             _ => {
                 let class_list = el.class_list();
@@ -372,9 +364,9 @@ pub fn main_js() -> Result<(), JsValue> {
         }
     }) as Box<dyn FnMut(_)>);
 
-    let main_el = document.get_element_by_id("main").unwrap();
-    main_el.add_event_listener_with_callback("click", onclick.as_ref().unchecked_ref())?;
+    let main_el = document.get_element_by_id("main").expect("main");
+    main_el
+        .add_event_listener_with_callback("click", onclick.as_ref().unchecked_ref())
+        .unwrap();
     onclick.forget();
-
-    Ok(())
 }

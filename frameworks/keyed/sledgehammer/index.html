@@ -1,21 +1,26 @@
-<!DOCTYPE html><html lang="en"><head>
-    <meta charset="UTF-8">
-    <title>fast-dom-"keyed"</title>
-    <link href="/css/currentStyle.css" rel="stylesheet">
-    <!-- <link data-trunk rel="rust" data-wasm-opt="0" /> -->
-    <script type="module">import init from '/frameworks/keyed/fast-dom/bundled-dist/fast-dom.js';init('/frameworks/keyed/fast-dom/bundled-dist/fast-dom_bg.wasm');</script>
+<!DOCTYPE html>
+<html lang="en">
 
-<link rel="preload" href="/frameworks/keyed/fast-dom/bundled-dist/fast-dom_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/frameworks/keyed/fast-dom/bundled-dist/fast-dom.js"></head>
+<head>
+    <meta charset="UTF-8">
+    <title>sledgehammer-"keyed"</title>
+    <link href="/css/currentStyle.css" rel="stylesheet">
+    <script
+        type="module">import init from '/frameworks/keyed/sledgehammer/bundled-dist/sledgehammer.js'; init('/frameworks/keyed/sledgehammer/bundled-dist/sledgehammer_bg.wasm');</script>
+    <!-- <link data-trunk rel="rust" data-wasm-opt="3" /> -->
+
+    <link rel="preload" href="/frameworks/keyed/sledgehammer/bundled-dist/sledgehammer_bg.wasm" as="fetch"
+        type="application/wasm" crossorigin="">
+    <link rel="modulepreload" href="/frameworks/keyed/sledgehammer/bundled-dist/sledgehammer.js">
+</head>
 
 <body>
-    <script src="/frameworks/keyed/fast-dom/isKeyed.js"></script>
     <div id="main">
         <div class="container">
             <div class="jumbotron">
                 <div class="row">
                     <div class="col-md-6">
-                        <h1>fast-dom-"keyed"</h1>
+                        <h1>sledgehammer-"keyed"</h1>
                     </div>
                     <div class="col-md-6">
                         <div class="row">
@@ -53,4 +58,6 @@
     </div>
 
 
-</body></html>
+</body>
+
+</html>

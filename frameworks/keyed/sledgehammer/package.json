@@ -1,10 +1,10 @@
 {
-  "name": "js-framework-benchmark-keyed-dioxus",
+  "name": "js-framework-benchmark-sledgehammer",
   "version": "1.0.0",
-  "description": "Benchmark for Dioxus",
+  "description": "Benchmark for sledgehammer",
   "license": "ISC",
   "js-framework-benchmark": {
-    "frameworkVersion": "0",
+    "frameworkVersion": "1.0.0",
     "issues": [
       772
     ]
