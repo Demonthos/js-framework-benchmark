@@ -1,6 +1,7 @@
-use fast_dom::element::Element;
-use fast_dom::*;
 use js_sys::Math;
+use sledgehammer::builder::MaybeId;
+use sledgehammer::element::Element;
+use sledgehammer::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -36,10 +37,9 @@ const ADJECTIVES: [&str; ADJECTIVES_LEN] = [
     "expensive",
     "fancy",
 ];
-const TBODY_ID: u64 = 1;
-const ROW_ID: u64 = 2;
-const TEMP_ID: u64 = 3;
-const NO_ID: Option<u64> = None;
+const TBODY_ID: NodeId = NodeId(1);
+const ROW_ID: NodeId = NodeId(2);
+const TEMP_ID: NodeId = NodeId(3);
 
 const COLOURS_LEN: usize = 11;
 const COLOURS_LEN_F64: f64 = COLOURS_LEN as f64;
@@ -62,16 +62,18 @@ fn random(max: f64) -> usize {
 struct Row {
     id: usize,
     label: String,
-    ptr: u64,
+    ptr: u32,
 }
 
 impl Row {
-    const fn el(&self) -> u64 {
-        self.ptr
+    #[inline]
+    const fn el(&self) -> NodeId {
+        NodeId(self.ptr)
     }
 
-    const fn label_node(&self) -> u64 {
-        self.ptr + 1
+    #[inline]
+    const fn label_node(&self) -> NodeId {
+        NodeId(self.ptr + 1)
     }
 }
 
@@ -79,8 +81,8 @@ struct Main {
     data: Vec<Row>,
     last_id: usize,
     rows: usize,
-    selected: Option<u64>,
-    msg: MsgBuilder,
+    selected: Option<NodeId>,
+    msg: MsgChannel,
 }
 
 fn get_parent_id(el: web_sys::Element) -> Option<usize> {
@@ -112,8 +114,10 @@ impl Main {
         while i < l {
             let row = &mut self.data[i];
             row.label.push_str(" !!!");
-            self.msg
-                .set_text(format_args!("{}", row.label), Some(row.label_node()));
+            self.msg.set_text(
+                format_args!("{}", row.label),
+                MaybeId::Node(row.label_node()),
+            );
             i += 10;
         }
         self.msg.flush();
@@ -121,7 +125,8 @@ impl Main {
 
     fn unselect(&mut self) {
         if let Some(el) = self.selected.take() {
-            self.msg.remove_attribute(Attribute::class, Some(el));
+            self.msg
+                .remove_attribute(Attribute::class, MaybeId::Node(el));
         }
     }
 
@@ -129,8 +134,11 @@ impl Main {
         self.unselect();
         for row in &self.data {
             if row.id == id {
-                self.msg
-                    .set_attribute(Attribute::class, format_args!("danger"), Some(row.el()));
+                self.msg.set_attribute(
+                    Attribute::class,
+                    format_args!("danger"),
+                    MaybeId::Node(row.el()),
+                );
                 self.selected = Some(row.el());
                 self.msg.flush();
                 return;
@@ -143,14 +151,14 @@ impl Main {
             Some(i) => self.data.remove(i),
             None => return,
         };
-        self.msg.remove(Some(row.el()));
+        self.msg.remove(MaybeId::Node(row.el()));
         self.msg.flush();
         self.rows -= 1;
     }
 
     fn clear(&mut self) {
         self.data = Vec::new();
-        self.msg.set_text(format_args!(""), Some(TBODY_ID));
+        self.msg.set_text(format_args!(""), MaybeId::Node(TBODY_ID));
         self.unselect();
         self.msg.flush();
         self.rows = 0;
@@ -170,8 +178,10 @@ impl Main {
         let row998 = &self.data[998];
         let row999 = &self.data[999];
 
-        self.msg.insert_before(Some(row2.el()), vec![row998.el()]);
-        self.msg.insert_before(Some(row999.el()), vec![row1.el()]);
+        self.msg
+            .insert_before(MaybeId::Node(row2.el()), vec![row998.el()]);
+        self.msg
+            .insert_before(MaybeId::Node(row999.el()), vec![row1.el()]);
 
         self.msg.flush();
         self.data.swap(1, 998);
@@ -200,20 +210,25 @@ impl Main {
             label.push(' ');
             label.push_str(noun);
 
-            let el = i as u64 * 2 + 1 + TEMP_ID;
-            let label_node = el + 1;
+            let el = i as u32 * 2 + 1 + TEMP_ID.0;
+            let el_id = NodeId(el);
+            let label_node = NodeId(el + 1);
             let id_string = id.to_string();
             let id_str = id_string.as_str();
-            self.msg.clone_node(Some(ROW_ID), Some(el));
             self.msg
-                .set_attribute("data-id", format_args!("{}", id_str), NO_ID);
-            self.msg.append_children(Some(TBODY_ID), vec![el]);
+                .clone_node(MaybeId::Node(ROW_ID), MaybeId::Node(el_id));
+            self.msg
+                .set_attribute("data-id", format_args!("{}", id_str), MaybeId::LastNode);
+            self.msg
+                .append_children(MaybeId::Node(TBODY_ID), vec![el_id]);
             self.msg.first_child();
-            self.msg.set_text(format_args!("{}", id_str), NO_ID);
+            self.msg
+                .set_text(format_args!("{}", id_str), MaybeId::LastNode);
             self.msg.next_sibling();
             self.msg.first_child();
             self.msg.store_with_id(label_node);
-            self.msg.set_text(format_args!("{}", label.as_str()), NO_ID);
+            self.msg
+                .set_text(format_args!("{}", label.as_str()), MaybeId::LastNode);
 
             let row = Row { id, label, ptr: el };
 
@@ -254,32 +269,37 @@ pub fn main() {
             ElementBuilder<Element, ((Attribute, &&str),), ()>,
         ),
     > = ElementBuilder::new(
-        Some(ROW_ID),
+        MaybeId::Node(ROW_ID),
         Element::tr,
         (),
         (
-            ElementBuilder::new(None, Element::td, ((Attribute::class, &"col-md-1"),), ()),
             ElementBuilder::new(
-                None,
+                MaybeId::LastNode,
+                Element::td,
+                ((Attribute::class, &"col-md-1"),),
+                (),
+            ),
+            ElementBuilder::new(
+                MaybeId::LastNode,
                 Element::td,
                 ((Attribute::class, &"col-md-4"),),
                 (ElementBuilder::new(
-                    None,
+                    MaybeId::LastNode,
                     Element::a,
                     ((Attribute::class, &"lbl"),),
                     (),
                 ),),
             ),
             ElementBuilder::new(
-                None,
+                MaybeId::LastNode,
                 Element::td,
                 ((Attribute::class, &"col-md-1"),),
                 (ElementBuilder::new(
-                    None,
+                    MaybeId::LastNode,
                     Element::a,
                     ((Attribute::class, &"remove"),),
                     (ElementBuilder::new(
-                        None,
+                        MaybeId::LastNode,
                         Element::span,
                         (
                             (Attribute::class, &"remove glyphicon glyphicon-remove"),
@@ -289,12 +309,17 @@ pub fn main() {
                     ),),
                 ),),
             ),
-            ElementBuilder::new(None, Element::td, ((Attribute::class, &"col-md-6"),), ()),
+            ElementBuilder::new(
+                MaybeId::LastNode,
+                Element::td,
+                ((Attribute::class, &"col-md-6"),),
+                (),
+            ),
         ),
     );
 
     let tbody = document.get_element_by_id("tbody").expect("tbody");
-    let mut msg = MsgBuilder::new(tbody.clone());
+    let mut msg = MsgChannel::new(tbody.clone());
     msg.build_full_element(EL);
     msg.set_node(TBODY_ID, tbody.into());
 
