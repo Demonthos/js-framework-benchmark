@@ -9,7 +9,6 @@ use wasm_bindgen::JsCast;
 use web_sys::Event;
 
 const ADJECTIVES_LEN: usize = 25;
-const ADJECTIVES_LEN_F64: f64 = ADJECTIVES_LEN as f64;
 const ADJECTIVES: [&str; ADJECTIVES_LEN] = [
     "pretty",
     "large",
@@ -42,21 +41,19 @@ const ROW_ID: NodeId = NodeId(2);
 const TEMP_ID: NodeId = NodeId(3);
 
 const COLOURS_LEN: usize = 11;
-const COLOURS_LEN_F64: f64 = COLOURS_LEN as f64;
 const COLOURS: [&str; COLOURS_LEN] = [
     "red", "yellow", "blue", "green", "pink", "brown", "purple", "brown", "white", "black",
     "orange",
 ];
 
 const NOUNS_LEN: usize = 13;
-const NOUNS_LEN_F64: f64 = NOUNS_LEN as f64;
 const NOUNS: [&str; NOUNS_LEN] = [
     "table", "chair", "house", "bbq", "desk", "car", "pony", "cookie", "sandwich", "burger",
     "pizza", "mouse", "keyboard",
 ];
 
-fn random(max: f64) -> usize {
-    ((Math::random() * 1000.0) % max) as usize
+fn random(max: usize) -> usize {
+    (Math::random() * 1000.0) as usize % max
 }
 
 struct Row {
@@ -199,9 +196,9 @@ impl Main {
             let i = self.rows + x;
             let id = self.last_id + i + 1;
 
-            let adjective = ADJECTIVES[random(ADJECTIVES_LEN_F64)];
-            let colour = COLOURS[random(COLOURS_LEN_F64)];
-            let noun = NOUNS[random(NOUNS_LEN_F64)];
+            let adjective = ADJECTIVES[random(ADJECTIVES_LEN)];
+            let colour = COLOURS[random(COLOURS_LEN)];
+            let noun = NOUNS[random(NOUNS_LEN)];
             let capacity = adjective.len() + colour.len() + noun.len() + 2;
             let mut label = String::with_capacity(capacity);
             label.push_str(adjective);

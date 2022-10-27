@@ -42,21 +42,21 @@ export interface BenchmarkOptions extends BenchmarkDriverOptions {
   numIterationsForStartupBenchmark: number;
 }
 
-export enum BENCHMARK_RUNNER { 
-  PUPPETEER = "puppeteer", 
-  PLAYWRIGHT = "playwright", 
-  WEBDRIVER_CDP = "webdrivercdp", 
-  WEBDRIVER = "webdriver" 
+export enum BENCHMARK_RUNNER {
+  PUPPETEER = "puppeteer",
+  PLAYWRIGHT = "playwright",
+  WEBDRIVER_CDP = "webdrivercdp",
+  WEBDRIVER = "webdriver"
 }
 
 export let config = {
   PORT: 8080,
   REMOTE_DEBUGGING_PORT: 9999,
   CHROME_PORT: 9998,
-  NUM_ITERATIONS_FOR_BENCHMARK_CPU: 10,
-  NUM_ITERATIONS_FOR_BENCHMARK_CPU_DROP_SLOWEST_COUNT: 2, // drop the # of slowest results
-  NUM_ITERATIONS_FOR_BENCHMARK_MEM: 1,
-  NUM_ITERATIONS_FOR_BENCHMARK_STARTUP: 3,
+  NUM_ITERATIONS_FOR_BENCHMARK_CPU: 100,
+  NUM_ITERATIONS_FOR_BENCHMARK_CPU_DROP_SLOWEST_COUNT: 20, // drop the # of slowest results
+  NUM_ITERATIONS_FOR_BENCHMARK_MEM: 10,
+  NUM_ITERATIONS_FOR_BENCHMARK_STARTUP: 30,
   WARMUP_COUNT: 5,
   TIMEOUT: 60 * 1000,
   LOG_PROGRESS: true,
@@ -107,7 +107,7 @@ export interface FrameworkInformation {
   useRowShadowRoot?: boolean;
   shadowRootName?: string;
   buttonsInShadowRoot?: boolean;
-  versions?: {[key: string]: string};
+  versions?: { [key: string]: string };
   frameworkVersionString: string;
 }
 
@@ -118,11 +118,11 @@ export interface IMatchPredicate {
 const matchAll: IMatchPredicate = (frameworkDirectory: string) => true;
 
 export async function initializeFrameworks(matchPredicate: IMatchPredicate = matchAll): Promise<FrameworkData[]> {
-  let lsResult ;
+  let lsResult;
   try {
     lsResult = (
-    await axios.get(`http://${config.HOST}:${config.PORT}/ls`)
-  ).data;
+      await axios.get(`http://${config.HOST}:${config.PORT}/ls`)
+    ).data;
   } catch (err) {
     console.log(`ERROR loading frameworks from http://${config.HOST}:${config.PORT}/ls. Is the server running?`);
     throw new Error(`ERROR loading frameworks from http://${config.HOST}:${config.PORT}/ls. Is the server running?`);
@@ -134,17 +134,17 @@ export async function initializeFrameworks(matchPredicate: IMatchPredicate = mat
     let fullName = frameworkVersionInformation.type + "/" + frameworkVersionInformation.directory;
     if (matchPredicate(fullName)) {
       frameworks.push({
-          name: frameworkVersionInformation.directory,
-          fullNameWithKeyedAndVersion: frameworkVersionInformation.frameworkVersionString,
-          uri: "frameworks/" + fullName + (frameworkVersionInformation.customURL ? frameworkVersionInformation.customURL : ""),
-          keyed: frameworkVersionInformation.type === "keyed",
-          useShadowRoot: !!frameworkVersionInformation.useShadowRoot,
-          useRowShadowRoot: !!frameworkVersionInformation.useRowShadowRoot,
-          shadowRootName: frameworkVersionInformation.shadowRootName,
-          buttonsInShadowRoot: !!frameworkVersionInformation.buttonsInShadowRoot,
-          issues: (frameworkVersionInformation.issues ?? []).map(i => Number(i))
-        });
-      }
+        name: frameworkVersionInformation.directory,
+        fullNameWithKeyedAndVersion: frameworkVersionInformation.frameworkVersionString,
+        uri: "frameworks/" + fullName + (frameworkVersionInformation.customURL ? frameworkVersionInformation.customURL : ""),
+        keyed: frameworkVersionInformation.type === "keyed",
+        useShadowRoot: !!frameworkVersionInformation.useShadowRoot,
+        useRowShadowRoot: !!frameworkVersionInformation.useRowShadowRoot,
+        shadowRootName: frameworkVersionInformation.shadowRootName,
+        buttonsInShadowRoot: !!frameworkVersionInformation.buttonsInShadowRoot,
+        issues: (frameworkVersionInformation.issues ?? []).map(i => Number(i))
+      });
+    }
   }
   if (config.LOG_DETAILS) {
     console.log("All available frameworks: ");
