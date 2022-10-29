@@ -387,7 +387,7 @@ function getImports() {
     imports.wbg.__wbindgen_throw = function (arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper51 = function (arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper53 = function (arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 8, __wbg_adapter_14);
         return addHeapObject(ret);
     };
@@ -426,7 +426,7 @@ function initSync(module) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('test3-1557fcab4944de19_bg.wasm', import.meta.url);
+        input = new URL('slegehammer_bg.wasm', import.meta.url);
     }
     const imports = getImports();
 
