@@ -203,7 +203,7 @@ function makeMutClosure(arg0, arg1, dtor, f) {
     return real;
 }
 function __wbg_adapter_14(arg0, arg1, arg2) {
-    wasm._dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h8b1e16526516926e(arg0, arg1, addHeapObject(arg2));
+    wasm._dyn_core__ops__function__FnMut__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h38a80e2974f357ea(arg0, arg1, addHeapObject(arg2));
 }
 
 function handleError(f, args) {
@@ -387,8 +387,8 @@ function getImports() {
     imports.wbg.__wbindgen_throw = function (arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper53 = function (arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 8, __wbg_adapter_14);
+    imports.wbg.__wbindgen_closure_wrapper42 = function (arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 4, __wbg_adapter_14);
         return addHeapObject(ret);
     };
     imports['./snippets/sledgehammer-2520c7141ef39646/interpreter_opt.js'] = __wbg_star0;
