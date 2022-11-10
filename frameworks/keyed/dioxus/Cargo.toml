@@ -6,11 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dioxus = { version = "0.2.4", features = ["web"] }
-getrandom = { version = "0.2.6", features = ["js"] }
-rand = { version = "0.8.5", features = ["small_rng"] }
+dioxus = { git = "https://github.com/dioxuslabs/dioxus.git" }
+dioxus-web = { git = "https://github.com/dioxuslabs/dioxus.git" }
+smallvec = "1.9.0"
 
-wasm-bindgen = { version = "*", features = ["enable-interning"] }
+wasm-bindgen = { version = "*" }
+js-sys = "*"
+
 [profile.release]
 opt-level = "s"
 lto = true
