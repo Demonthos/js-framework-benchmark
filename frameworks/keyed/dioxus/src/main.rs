@@ -6,16 +6,11 @@ use smallvec::{smallvec, SmallVec};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-fn random(max: f64) -> usize {
-    ((Math::random() * 1000.0) % max) as usize
+fn random(max: usize) -> usize {
+    (Math::random() * 1000.0) as usize % max
 }
 
 fn main() {
-    // for performance reasons, we want to cache these strings on the edge of js/rust boundary
-    // for &name in ADJECTIVES.iter().chain(NOUNS.iter()).chain(COLOURS.iter()) {
-    //     wasm_bindgen::intern(name);
-    // }
-
     dioxus_web::launch(app);
 }
 
@@ -32,9 +27,9 @@ impl Label {
             labels.push(Label {
                 key: x as usize + key_from,
                 labels: smallvec![
-                    ADJECTIVES[random((ADJECTIVES.len() - 1) as f64)],
-                    COLOURS[random((COLOURS.len() - 1) as f64)],
-                    NOUNS[random((NOUNS.len() - 1) as f64)],
+                    ADJECTIVES[random(ADJECTIVES.len() - 1)],
+                    COLOURS[random(COLOURS.len() - 1)],
+                    NOUNS[random(NOUNS.len() - 1)],
                 ],
             });
         }

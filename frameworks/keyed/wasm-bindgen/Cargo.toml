@@ -26,3 +26,6 @@ features = [
 [profile.release]
 lto = true
 panic = "abort"
+
+[features]
+none = []
