@@ -10,12 +10,11 @@ edition = "2021"
 # dioxus-web = { git = "https://github.com/dioxuslabs/dioxus.git" }
 dioxus = { path = "c:/users/desktop/github/dioxus/packages/dioxus" }
 dioxus-web = { path = "c:/users/desktop/github/dioxus/packages/web" }
-smallvec = "1.9.0"
 
 wasm-bindgen = { version = "*" }
 js-sys = "*"
 
 [profile.release]
-opt-level = "s"
+opt-level = 3
 lto = true
 codegen-units = 1

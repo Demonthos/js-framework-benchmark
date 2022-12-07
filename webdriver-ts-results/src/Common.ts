@@ -3,7 +3,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const jStat = require('jstat').jStat;
 
-export enum StatisticResult {Slower, Undecided, Faster}
+export enum StatisticResult { Slower, Undecided, Faster }
 export enum DisplayMode { DisplayMean, DisplayMedian, BoxPlot }
 
 export enum FrameworkType { KEYED, NON_KEYED }
@@ -16,39 +16,39 @@ export interface Framework {
     displayname: string;
 }
 
-export enum Severity {Note, Error}
+export enum Severity { Note, Error }
 
 interface Category {
-  id: number;
-  text: string;
-  issues: Array<number>;
-  severity: Severity;
+    id: number;
+    text: string;
+    issues: Array<number>;
+    severity: Severity;
 }
 
 export const categories: Category[] = [
-  {id:1, text:"[Note]: Manual DOM manipulations", issues: [772], severity: Severity.Note},
-  {id:2, text:"[Note]:View state on the model", issues: [800], severity: Severity.Note},
-  {id:3, text:"[Note]: Explicit requestAnimationFrame calls", issues: [796], severity: Severity.Note},
-  {id:4, text:"[Note]: Manual event delegation", issues: [801], severity: Severity.Note},
-  {id:5, text:"[Issue]: Errors in the implementation", issues: [634], severity: Severity.Error},
+    { id: 1, text: "[Note]: Manual DOM manipulations", issues: [772], severity: Severity.Note },
+    { id: 2, text: "[Note]:View state on the model", issues: [800], severity: Severity.Note },
+    { id: 3, text: "[Note]: Explicit requestAnimationFrame calls", issues: [796], severity: Severity.Note },
+    { id: 4, text: "[Note]: Manual event delegation", issues: [801], severity: Severity.Note },
+    { id: 5, text: "[Issue]: Errors in the implementation", issues: [634], severity: Severity.Error },
 ]
 
 interface IIssue {
-    issue: number, 
-    severity: Severity, 
-    text: string, 
+    issue: number,
+    severity: Severity,
+    text: string,
     link: string
 }
 
 export const knownIssues: IIssue[] = [
-    {issue: 634, severity: Severity.Error, text:"[Issue]: The HTML structure for the implementation is not fully correct.", link: "https://github.com/krausest/js-framework-benchmark/issues/634"},
-    {issue: 772, severity: Severity.Note, text:"[Note]: Implementation uses manual DOM manipulations", link: "https://github.com/krausest/js-framework-benchmark/issues/772"},
-    {issue: 796, severity: Severity.Note, text:"[Note]: Implementation uses explicit requestAnimationFrame calls", link: "https://github.com/krausest/js-framework-benchmark/issues/796"},
-    {issue: 800, severity: Severity.Note, text:"[Note]: View state on the model", link: "https://github.com/krausest/js-framework-benchmark/issues/800"},
-    {issue: 801, severity: Severity.Note, text:"[Note]: Implementation uses manual event delegation", link: "https://github.com/krausest/js-framework-benchmark/issues/801"},
-  ];
+    { issue: 634, severity: Severity.Error, text: "[Issue]: The HTML structure for the implementation is not fully correct.", link: "https://github.com/krausest/js-framework-benchmark/issues/634" },
+    { issue: 772, severity: Severity.Note, text: "[Note]: Implementation uses manual DOM manipulations", link: "https://github.com/krausest/js-framework-benchmark/issues/772" },
+    { issue: 796, severity: Severity.Note, text: "[Note]: Implementation uses explicit requestAnimationFrame calls", link: "https://github.com/krausest/js-framework-benchmark/issues/796" },
+    { issue: 800, severity: Severity.Note, text: "[Note]: View state on the model", link: "https://github.com/krausest/js-framework-benchmark/issues/800" },
+    { issue: 801, severity: Severity.Note, text: "[Note]: Implementation uses manual event delegation", link: "https://github.com/krausest/js-framework-benchmark/issues/801" },
+];
 
-export function findIssue(issueNumber: number): IIssue|undefined {
+export function findIssue(issueNumber: number): IIssue | undefined {
     return knownIssues.find(i => i.issue === issueNumber)
 }
 export enum BenchmarkType { CPU, MEM, DUMMY, STARTUP }
@@ -77,9 +77,9 @@ export interface Result {
 
 interface ResultData {
     benchmarks: Array<Benchmark>;
-    results: Array<Array<TableResultValueEntry|null>>;
-    geomMean: Array<TableResultGeommeanEntry|null>;
-    comparison: Array<TableResultComparisonEntry|null>;
+    results: Array<Array<TableResultValueEntry | null>>;
+    geomMean: Array<TableResultGeommeanEntry | null>;
+    comparison: Array<TableResultComparisonEntry | null>;
 }
 
 export const SORT_BY_NAME = 'SORT_BY_NAME';
@@ -88,28 +88,28 @@ export const SORT_BY_GEOMMEAN_MEM = 'SORT_BY_GEOMMEAN_MEM';
 export const SORT_BY_GEOMMEAN_STARTUP = 'SORT_BY_GEOMMEAN_STARTUP';
 export type T_SORT_BY_GEOMMEAN = typeof SORT_BY_GEOMMEAN_CPU | typeof SORT_BY_GEOMMEAN_MEM | typeof SORT_BY_GEOMMEAN_STARTUP;
 
-const computeColor = function(factor: number): string {
+const computeColor = function (factor: number): string {
     if (factor < 2.0) {
         const a = (factor - 1.0);
-        const r = (1.0-a)* 99 + a * 255;
-        const g = (1.0-a)* 191 + a * 236;
-        const b = (1.0-a)* 124 + a * 132;
+        const r = (1.0 - a) * 99 + a * 255;
+        const g = (1.0 - a) * 191 + a * 236;
+        const b = (1.0 - a) * 124 + a * 132;
         return `rgb(${r.toFixed(0)}, ${g.toFixed(0)}, ${b.toFixed(0)})`
-    } else  {
+    } else {
         const a = Math.min((factor - 2.0) / 2.0, 1.0);
-        const r = (1.0-a)* 255 + a * 249;
-        const g = (1.0-a)* 236 + a * 105;
-        const b = (1.0-a)* 132 + a * 108;
+        const r = (1.0 - a) * 255 + a * 249;
+        const g = (1.0 - a) * 236 + a * 105;
+        const b = (1.0 - a) * 132 + a * 108;
         return `rgb(${r.toFixed(0)}, ${g.toFixed(0)}, ${b.toFixed(0)})`
     }
 }
 
 export class TableResultValueEntry {
-    constructor(public key: string, public value: number, public formattedValue: string, 
-        public deviation: string|null, public factor: number, public formattedFactor: string, 
-        public bgColor: string, public textColor: string, 
+    constructor(public key: string, public value: number, public formattedValue: string,
+        public deviation: string | null, public factor: number, public formattedFactor: string,
+        public bgColor: string, public textColor: string,
         public statisticResult: StatisticResult,
-        public statisticallySignificantFactor: string|number|undefined = undefined) {
+        public statisticallySignificantFactor: string | number | undefined = undefined) {
     }
 }
 
@@ -125,12 +125,12 @@ export class TableResultGeommeanEntry {
 }
 
 export interface ResultLookup {
-    (benchmark: Benchmark, framework: Framework): Result|null;
+    (benchmark: Benchmark, framework: Framework): Result | null;
 }
 export function convertToMap(results: Array<Result>): ResultLookup {
     const resultMap = new Map<string, Map<string, Result>>();
     results.forEach(r => {
-        if (!resultMap.has(r.benchmark)) resultMap.set(r.benchmark, new Map<string,Result>());
+        if (!resultMap.has(r.benchmark)) resultMap.set(r.benchmark, new Map<string, Result>());
         resultMap.get(r.benchmark)!.set(r.framework, r);
     });
     return (benchmark: Benchmark, framework: Framework) => {
@@ -142,12 +142,12 @@ export function convertToMap(results: Array<Result>): ResultLookup {
     }
 }
 
-const undecided: [string, string, StatisticResult] = ['#fff','#000',StatisticResult.Undecided];
-const faster: [string, string, StatisticResult] = ['#00b300','#fff',StatisticResult.Faster];
-const slower: [string, string, StatisticResult] = ['#b30000','#fff',StatisticResult.Slower];
+const undecided: [string, string, StatisticResult] = ['#fff', '#000', StatisticResult.Undecided];
+const faster: [string, string, StatisticResult] = ['#00b300', '#fff', StatisticResult.Faster];
+const slower: [string, string, StatisticResult] = ['#b30000', '#fff', StatisticResult.Slower];
 
 function colorsForStatisticResult(statisticResult: StatisticResult) {
-    switch(statisticResult) {
+    switch (statisticResult) {
         case StatisticResult.Faster:
             return faster;
         case StatisticResult.Slower:
@@ -157,7 +157,7 @@ function colorsForStatisticResult(statisticResult: StatisticResult) {
     }
 }
 
-const statisticComputeColor = function(sign: number, pValue: number): [string, string, StatisticResult] {
+const statisticComputeColor = function (sign: number, pValue: number): [string, string, StatisticResult] {
     if (pValue > 0.10) {
         return undecided; //['#fff','#000', StatisticResult.Undecided];
     }
@@ -168,7 +168,7 @@ const statisticComputeColor = function(sign: number, pValue: number): [string, s
         // let b = 0;
         // return [`rgb(${r.toFixed(0)}, ${g.toFixed(0)}, ${b.toFixed(0)})`, '#fff', StatisticResult.Faster];
         return faster;
-    } else  {
+    } else {
         // let a = 0.8; //(0.1 - pValue) * 10.0;
         // let r = (1.0-a)* 255 + a * 160;
         // let g = 0;
@@ -177,7 +177,7 @@ const statisticComputeColor = function(sign: number, pValue: number): [string, s
     }
 }
 
-const formatEn = new Intl.NumberFormat('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: true});
+const formatEn = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: true });
 
 export class ResultTableData {
 
@@ -200,29 +200,29 @@ export class ResultTableData {
 
     constructor(public allFrameworks: Array<Framework>, public allBenchmarks: Array<Benchmark>, public results: ResultLookup,
         public selectedFrameworksInDropdown: Set<Framework>, public selectedBenchmarks: Set<Benchmark>, type: FrameworkType, sortKey: string,
-        public displayMode: DisplayMode, public compareWith: Framework|undefined, public selectedCategories: Set<number>) {     
+        public displayMode: DisplayMode, public compareWith: Framework | undefined, public selectedCategories: Set<number>) {
 
         this.selectedFameworks = new Set<Framework>();
 
         const allowedIssues = new Set<number>();
         categories.forEach(c => {
-          if (selectedCategories.has(c.id)) {
-            for (const i of c.issues) { allowedIssues.add(i); }
-          }
+            if (selectedCategories.has(c.id)) {
+                for (const i of c.issues) { allowedIssues.add(i); }
+            }
         });
 
         console.log("ResultTableData", allowedIssues, selectedCategories);
 
         selectedFrameworksInDropdown.forEach(f => {
-          if (f.issues.every(i => allowedIssues.has(i))
-            || (f.name === 'vanillajs-keyed') || (f.name === 'vanillajs-1-keyed')
-            || (f.name === 'vanillajs-non-keyed') || (f.name === 'vanillajs-1-non-keyed')
+            if (f.issues.every(i => allowedIssues.has(i))
+                || (f.name === 'vanillajs-keyed') || (f.name === 'vanillajs-1-keyed')
+                || (f.name === 'vanillajs-non-keyed') || (f.name === 'vanillajs-1-non-keyed')
             ) {
-              this.selectedFameworks.add(f);
-          }
+                this.selectedFameworks.add(f);
+            }
         })
         this.frameworks = this.allFrameworks.filter(framework => framework.type === type && this.selectedFameworks.has(framework));
-        this.frameworksForFactors = this.allFrameworks.filter(framework => framework.type === type 
+        this.frameworksForFactors = this.allFrameworks.filter(framework => framework.type === type
             && framework.issues.every(i => allowedIssues.has(i)));
         this.update(sortKey);
     }
@@ -235,16 +235,16 @@ export class ResultTableData {
             const geomMean = this.frameworks.map((framework, idx) => {
                 const resultsForFramework = results.map(arr => arr[idx]);
                 return this.computeGeometricMean(framework, benchmarks, resultsForFramework);
-            });    
+            });
             const comparison = this.frameworks.map((framework, idx) => {
                 const resultsForFramework = results.map(arr => arr[idx]);
                 return this.computeComparison(framework, benchmarks, resultsForFramework);
-            });    
-            
+            });
 
-            return {benchmarks, results, geomMean, comparison}
+
+            return { benchmarks, results, geomMean, comparison }
         }
-        [BenchmarkType.CPU, BenchmarkType.MEM, BenchmarkType.STARTUP].forEach((type) => 
+        [BenchmarkType.CPU, BenchmarkType.MEM, BenchmarkType.STARTUP].forEach((type) =>
             this.resultsMap.set(type, createResult(type))
         )
         this.sortBy(sortKey);
@@ -254,7 +254,7 @@ export class ResultTableData {
         return this.resultsMap.get(type)!
     }
     sortBy(sortKey: string): void {
-        const zipped = this.frameworks.map((f,frameworkIndex) => {
+        const zipped = this.frameworks.map((f, frameworkIndex) => {
             let sortValue;
             if (sortKey === SORT_BY_NAME) sortValue = f.name;
             else if (sortKey === SORT_BY_GEOMMEAN_CPU) sortValue = this.getResult(BenchmarkType.CPU).geomMean[frameworkIndex]!.mean || Number.POSITIVE_INFINITY;
@@ -264,9 +264,9 @@ export class ResultTableData {
                 const cpuIdx = this.getResult(BenchmarkType.CPU).benchmarks.findIndex(b => b.id === sortKey);
                 const memIdx = this.getResult(BenchmarkType.MEM).benchmarks.findIndex(b => b.id === sortKey);
                 const startupIdx = this.getResult(BenchmarkType.STARTUP).benchmarks.findIndex(b => b.id === sortKey);
-                if (cpuIdx>-1) sortValue = this.getResult(BenchmarkType.CPU).results[cpuIdx][frameworkIndex]?.value ?? Number.POSITIVE_INFINITY;
-                else if (startupIdx>-1) sortValue = this.getResult(BenchmarkType.STARTUP).results[startupIdx][frameworkIndex]?.value ?? Number.POSITIVE_INFINITY;
-                else if (memIdx>-1) sortValue = this.getResult(BenchmarkType.MEM).results[memIdx][frameworkIndex]?.value ?? Number.POSITIVE_INFINITY;
+                if (cpuIdx > -1) sortValue = this.getResult(BenchmarkType.CPU).results[cpuIdx][frameworkIndex]?.value ?? Number.POSITIVE_INFINITY;
+                else if (startupIdx > -1) sortValue = this.getResult(BenchmarkType.STARTUP).results[startupIdx][frameworkIndex]?.value ?? Number.POSITIVE_INFINITY;
+                else if (memIdx > -1) sortValue = this.getResult(BenchmarkType.MEM).results[memIdx][frameworkIndex]?.value ?? Number.POSITIVE_INFINITY;
                 else throw Error(`sortKey ${sortKey} not found`);
             }
             return {
@@ -275,7 +275,7 @@ export class ResultTableData {
                 sortValue: sortValue
             };
         });
-        zipped.sort((a,b) => { if (a.sortValue! < b.sortValue!) return -1; else if (a.sortValue === b.sortValue) return 0; return 1;})
+        zipped.sort((a, b) => { if (a.sortValue! < b.sortValue!) return -1; else if (a.sortValue === b.sortValue) return 0; return 1; })
         const remappedIdx = zipped.map(z => z.origIndex);
         this.frameworks = this.remap(remappedIdx, this.frameworks);
         [BenchmarkType.CPU, BenchmarkType.MEM, BenchmarkType.STARTUP].forEach((type) => {
@@ -296,10 +296,10 @@ export class ResultTableData {
         return copy;
     }
 
-    computeGeometricMean(framework: Framework, benchmarksCPU: Array<Benchmark>, resultsCPUForFramework: Array<TableResultValueEntry|null>): TableResultGeommeanEntry {
+    computeGeometricMean(framework: Framework, benchmarksCPU: Array<Benchmark>, resultsCPUForFramework: Array<TableResultValueEntry | null>): TableResultGeommeanEntry {
         let count = 0.0;
         const gMean = resultsCPUForFramework.reduce((gMean, r) => {
-            if (r !== null)  {
+            if (r !== null) {
                 count++;
                 gMean *= (r.factor as number);
             }
@@ -307,17 +307,17 @@ export class ResultTableData {
         }, 1.0);
         const value = Math.pow(gMean, 1 / count);
         return this.compareWith ? new TableResultGeommeanEntry(framework.name, framework, value, '#fff', '#000') :
-             new TableResultGeommeanEntry(framework.name, framework, value, computeColor(value), '#000');
+            new TableResultGeommeanEntry(framework.name, framework, value, computeColor(value), '#000');
     }
-    computeComparison(framework: Framework, benchmarksCPU: Array<Benchmark>, resultsCPUForFramework: Array<TableResultValueEntry|null>): TableResultComparisonEntry {
+    computeComparison(framework: Framework, benchmarksCPU: Array<Benchmark>, resultsCPUForFramework: Array<TableResultValueEntry | null>): TableResultComparisonEntry {
         if (this.compareWith) {
-            let statisticResult: StatisticResult|undefined = undefined;
+            let statisticResult: StatisticResult | undefined = undefined;
             resultsCPUForFramework.forEach((r) => {
-                    if (r?.statisticResult !== StatisticResult.Undecided) {
-                        if (statisticResult === undefined) {
-                            statisticResult = r?.statisticResult;
-                        } else {
-                            if (statisticResult!==r?.statisticResult) statisticResult = StatisticResult.Undecided
+                if (r?.statisticResult !== StatisticResult.Undecided) {
+                    if (statisticResult === undefined) {
+                        statisticResult = r?.statisticResult;
+                    } else {
+                        if (statisticResult !== r?.statisticResult) statisticResult = StatisticResult.Undecided
                     }
                 }
             });
@@ -334,18 +334,17 @@ export class ResultTableData {
         }
     }
 
-    computeFactors(benchmark: Benchmark): Array<TableResultValueEntry|null> {
-        debugger;
+    computeFactors(benchmark: Benchmark): Array<TableResultValueEntry | null> {
         const benchmarkResults = this.frameworksForFactors.map(f => this.results(benchmark, f));
-        const selectFn = (result: Result|null) => {
-            if (result===null) return 0;
+        const selectFn = (result: Result | null) => {
+            if (result === null) return 0;
             if (this.displayMode === DisplayMode.DisplayMedian) {
                 return result.median;
             } else {
                 return result.mean;
             }
         }
-        const min = Math.max(benchmarkResults.reduce((min, result) => result===null ? min : Math.min(min, selectFn(result)), Number.POSITIVE_INFINITY));
+        const min = Math.max(benchmarkResults.reduce((min, result) => result === null ? min : Math.min(min, selectFn(result)), Number.POSITIVE_INFINITY));
         // if (benchmark.type === BenchmarkType.CPU) {
         //     min = Math.max(1000/60, min);
         // }
@@ -354,7 +353,7 @@ export class ResultTableData {
             if (result === null) return null;
 
             const value = selectFn(result);
-            const factor = value/min;
+            const factor = value / min;
             // if (benchmark.type === BenchmarkType.CPU) {
             //     factor = Math.max(1, factor);
             // }    
@@ -366,7 +365,7 @@ export class ResultTableData {
                 return new TableResultValueEntry(f.name, value, formattedValue, conficenceIntervalStr, factor, factor.toFixed(2), computeColor(factor), '#000', StatisticResult.Undecided);
             } else {
                 const compareWithResults = this.results(benchmark, this.compareWith)!;
-                    // let meanStr = 'x'; //mean.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: true});
+                // let meanStr = 'x'; //mean.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: true});
 
                 // X1,..,Xn: this Framework, Y1, ..., Ym: selected Framework
                 // https://de.wikipedia.org/wiki/Zweistichproben-t-Test
@@ -376,20 +375,20 @@ export class ResultTableData {
                 const stdDev = result.standardDeviation || 0;
                 const compareWithResultsStdDev = compareWithResults.standardDeviation || 0;
 
-                
+
                 const x1 = result.mean;
                 const x2 = compareWithMean;
-                const s1_2 = stdDev*stdDev;
+                const s1_2 = stdDev * stdDev;
                 const s2_2 = compareWithResultsStdDev * compareWithResultsStdDev;
                 const n1 = 10;
                 const n2 = 10;
-                const ny = Math.pow(s1_2/n1 + s2_2/n2, 2) / (s1_2*s1_2 / (n1*n1*(n1-1)) + s2_2*s2_2/(n2*n2*(n2-1)));
-                const t = (x1-x2)/Math.sqrt(s1_2/n1 + s2_2/n2);
-                const p = (1.0-jStat.studentt.cdf( Math.abs(t), ny ))*2;
+                const ny = Math.pow(s1_2 / n1 + s2_2 / n2, 2) / (s1_2 * s1_2 / (n1 * n1 * (n1 - 1)) + s2_2 * s2_2 / (n2 * n2 * (n2 - 1)));
+                const t = (x1 - x2) / Math.sqrt(s1_2 / n1 + s2_2 / n2);
+                const p = (1.0 - jStat.studentt.cdf(Math.abs(t), ny)) * 2;
                 statisticalCol = statisticComputeColor(t, p);
-                statisticalResult = (p*100).toFixed(3)+"%";
+                statisticalResult = (p * 100).toFixed(3) + "%";
                 return new TableResultValueEntry(f.name, value, formattedValue, conficenceIntervalStr, factor, factor.toFixed(2), statisticalCol[0], statisticalCol[1], statisticalCol[2], statisticalResult);
-            } 
+            }
         });
     }
 }

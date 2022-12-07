@@ -2,7 +2,6 @@
 
 use dioxus::prelude::*;
 use js_sys::Math;
-use smallvec::{smallvec, SmallVec};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -14,26 +13,44 @@ fn main() {
     dioxus_web::launch(app);
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug)]
 struct Label {
     key: usize,
-    labels: SmallVec<[&'static str; 3]>,
+    labels: [&'static str; 3],
+    excited: u8,
+}
+
+impl PartialEq for Label {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key
+            && self.excited == other.excited
+            && self
+                .labels
+                .iter()
+                .zip(other.labels.iter())
+                .all(|(a, b)| std::ptr::eq(a, b))
+    }
 }
 
 impl Label {
     fn new_list(num: usize, key_from: usize) -> Vec<Self> {
         let mut labels = Vec::with_capacity(num);
-        for x in 0..num {
-            labels.push(Label {
-                key: x as usize + key_from,
-                labels: smallvec![
-                    ADJECTIVES[random(ADJECTIVES.len() - 1)],
-                    COLOURS[random(COLOURS.len() - 1)],
-                    NOUNS[random(NOUNS.len() - 1)],
-                ],
-            });
-        }
+        append(&mut labels, num, key_from);
         labels
+    }
+}
+
+fn append(list: &mut Vec<Label>, num: usize, key_from: usize) {
+    for x in 0..num {
+        list.push(Label {
+            key: x as usize + key_from,
+            labels: [
+                ADJECTIVES[random(ADJECTIVES.len() - 1)],
+                COLOURS[random(COLOURS.len() - 1)],
+                NOUNS[random(NOUNS.len() - 1)],
+            ],
+            excited: 0,
+        });
     }
 }
 
@@ -53,46 +70,52 @@ impl LabelsContainer {
     }
 
     fn append(&mut self, num: usize) {
-        self.labels
-            .extend(Label::new_list(1_000, self.last_key + 1));
+        self.labels.reserve(num);
+        append(&mut self.labels, num, self.last_key + 1);
         self.last_key += num;
     }
 
     fn overwrite(&mut self, num: usize) {
-        self.labels = Label::new_list(num, self.last_key + 1);
+        self.labels.clear();
+        append(&mut self.labels, num, self.last_key + 1);
         self.last_key += num;
     }
 
     fn swap(&mut self, a: usize, b: usize) {
         if self.labels.len() > a + 1 && self.labels.len() > b {
             self.labels.swap(a, b);
-            // panic!("{:?}", self.labels);
         }
     }
 
-    fn remove(&mut self, index: usize) {
-        self.labels.remove(index);
+    fn remove(&mut self, key: usize) {
+        if let Some(to_remove) = self.labels.iter().position(|x| x.key == key) {
+            self.labels.remove(to_remove);
+        }
     }
 }
 
 fn app(cx: Scope) -> Element {
     let labels_container = use_ref(&cx, || LabelsContainer::new(0, 0));
     let labels_container_clone = labels_container.clone();
-    let remove_row: Rc<RefCell<Box<dyn FnMut(usize)>>> =
-        Rc::new(RefCell::new(Box::new(move |row| {
-            labels_container_clone.write().remove(row);
-        })));
-    let selected = use_state(&cx, || None as Option<usize>);
+    let remove_ref: &Rc<RefCell<Box<dyn FnMut(usize)>>> = cx.use_hook(|| {
+        let closure: Rc<RefCell<Box<dyn FnMut(usize)>>> =
+            Rc::new(RefCell::new(Box::new(move |row| {
+                labels_container_clone.write().remove(row);
+            })));
+        closure
+    });
+    let selected: &UseState<Option<usize>> = use_state(&cx, || None);
     let selected_clone = selected.clone();
-    let select_row: Rc<RefCell<Box<dyn FnMut(usize)>>> =
-        Rc::new(RefCell::new(Box::new(move |row| {
-            selected_clone.set(Some(row));
-        })));
-    let selected_ref = &select_row;
-    let remove_ref = &remove_row;
+    let selected_ref: &Rc<RefCell<Box<dyn FnMut(usize)>>> = cx.use_hook(|| {
+        let closure: Rc<RefCell<Box<dyn FnMut(usize)>>> =
+            Rc::new(RefCell::new(Box::new(move |key| {
+                selected_clone.set(Some(key));
+            })));
+        closure
+    });
     let borrow = labels_container.read();
 
-    cx.render(rsx! {
+    render! {
         div { class: "container",
             div { class: "jumbotron",
                 div { class: "row",
@@ -112,7 +135,7 @@ fn app(cx: Scope) -> Element {
                                 onclick: move |_| {
                                     let mut write_handle = labels_container.write();
                                     for i in 0..(write_handle.labels.len()/10) {
-                                        write_handle.labels[i*10].labels.push("!!!");
+                                        write_handle.labels[i*10].excited += 1;
                                     }
                                 },
                             }
@@ -129,14 +152,13 @@ fn app(cx: Scope) -> Element {
 
             table { class: "table table-hover table-striped test-data",
                 tbody { id: "tbody",
-                    borrow.labels.iter().enumerate().map(|(idx, item)| {
+                    borrow.labels.iter().map(|item| {
                         rsx! {
                             Row {
-                                label: item.clone(),
+                                label: *item,
                                 selected: *selected == Some(item.key),
                                 select: selected_ref.clone(),
                                 remove: remove_ref.clone(),
-                                index: idx,
                                 key: "{item.key}"
                             }
                         }
@@ -146,21 +168,20 @@ fn app(cx: Scope) -> Element {
 
             span { class: "preloadicon glyphicon glyphicon-remove", aria_hidden: "true" }
         }
-    })
+    }
 }
 
 #[derive(Props)]
 struct RowProps {
     label: Label,
     selected: bool,
-    index: usize,
     remove: Rc<RefCell<Box<dyn FnMut(usize)>>>,
     select: Rc<RefCell<Box<dyn FnMut(usize)>>>,
 }
 
 impl PartialEq for RowProps {
     fn eq(&self, other: &Self) -> bool {
-        self.label == other.label && self.selected == other.selected && self.index == other.index
+        self.label == other.label && self.selected == other.selected
     }
 }
 
@@ -170,37 +191,37 @@ fn Row(cx: Scope<RowProps>) -> Element {
         selected,
         remove,
         select,
-        index,
     } = &cx.props;
     let key = label.key;
     let is_in_danger = if *selected { "danger" } else { "" };
-    let text = label.labels.join(" ");
+    let [adj, col, noun] = label.labels;
+    let extra = " !!!".repeat(label.excited as usize);
 
-    cx.render(rsx! {
+    render! {
         tr { class: "{is_in_danger}",
             td { class:"col-md-1", "{key}" }
             td { class:"col-md-4", onclick: move |_| (select.borrow_mut())(key),
-                a { class: "lbl", "{text}" }
+                a { class: "lbl", "{adj} {col} {noun}{extra}" }
             }
             td { class: "col-md-1",
-                a { class: "remove", onclick: move |_| (remove.borrow_mut())(*index),
+                a { class: "remove", onclick: move |_| (remove.borrow_mut())(key),
                     span { class: "glyphicon glyphicon-remove remove", aria_hidden: "true" }
                 }
             }
             td { class: "col-md-6" }
         }
-    })
+    }
 }
 
 #[derive(Props)]
 struct ActionButtonProps<'a> {
-    name: &'a str,
-    id: &'a str,
+    name: &'static str,
+    id: &'static str,
     onclick: EventHandler<'a>,
 }
 
 fn ActionButton<'a>(cx: Scope<'a, ActionButtonProps<'a>>) -> Element {
-    cx.render(rsx! {
+    render! {
         div {
             class: "col-sm-6 smallpad",
             button {
@@ -211,7 +232,7 @@ fn ActionButton<'a>(cx: Scope<'a, ActionButtonProps<'a>>) -> Element {
                 "{cx.props.name}"
             }
         }
-    })
+    }
 }
 
 static ADJECTIVES: &[&str] = &[
