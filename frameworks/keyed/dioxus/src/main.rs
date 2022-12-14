@@ -195,10 +195,14 @@ fn Row(cx: Scope<RowProps>) -> Element {
     let key = label.key;
     let is_in_danger = if *selected { "danger" } else { "" };
     let [adj, col, noun] = label.labels;
-    let extra = " !!!".repeat(label.excited as usize);
+    let mut extra = dioxus::core::exports::bumpalo::collections::String::new_in(cx.bump());
+    for _ in 0..label.excited {
+        extra.push_str(" !!!");
+    }
+    let extra = extra.into_bump_str();
 
     render! {
-        tr { class: "{is_in_danger}",
+        tr { class: is_in_danger,
             td { class:"col-md-1", "{key}" }
             td { class:"col-md-4", onclick: move |_| (select.borrow_mut())(key),
                 a { class: "lbl", "{adj} {col} {noun}{extra}" }
