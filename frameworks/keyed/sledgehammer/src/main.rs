@@ -1,7 +1,7 @@
 use js_sys::Math;
-use lol_alloc::{FreeListAllocator, LockedAllocator};
+use sledgehammer::channel::MaybeId;
+use sledgehammer::element::Element;
 use sledgehammer::*;
-use sledgehammer_prebuild::html;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -259,30 +259,47 @@ pub fn main() {
     let window = web_sys::window().expect("window");
     let document = window.document().expect("document");
 
-    const EL: StaticBatch = html! {
-        <tr>
-            <td class="col-md-1">
-            </td>
-            <td class="col-md-4">
-                <a class="lbl">
-                </a>
-            </td>
-            <td class="col-md-1">
-                <a class="remove">
-                    <span class="remove glyphicon glyphicon-remove" aria-hidden="true">
-                    </span>
-                </a>
-            </td>
-            <td class="col-md-6">
-            </td>
-        </tr>
-    };
+    const EL: ElementBuilder<'static> = ElementBuilder::new(Element::tr.any_element_const())
+        .id(ROW_ID)
+        .children(&[
+            NodeBuilder::Element(
+                ElementBuilder::new(Element::td.any_element_const())
+                    .attrs(&[(Attribute::class.any_attr_const(), "col-md-1")]),
+            ),
+            NodeBuilder::Element(
+                ElementBuilder::new(Element::td.any_element_const())
+                    .attrs(&[(Attribute::class.any_attr_const(), "col-md-4")])
+                    .children(&[NodeBuilder::Element(
+                        ElementBuilder::new(Element::a.any_element_const())
+                            .attrs(&[(Attribute::class.any_attr_const(), "lbl")]),
+                    )]),
+            ),
+            NodeBuilder::Element(
+                ElementBuilder::new(Element::td.any_element_const())
+                    .attrs(&[(Attribute::class.any_attr_const(), "col-md-1")])
+                    .children(&[NodeBuilder::Element(
+                        ElementBuilder::new(Element::a.any_element_const())
+                            .attrs(&[(Attribute::class.any_attr_const(), "remove")])
+                            .children(&[NodeBuilder::Element(
+                                ElementBuilder::new(Element::span.any_element_const()).attrs(&[
+                                    (
+                                        Attribute::class.any_attr_const(),
+                                        "remove glyphicon glyphicon-remove",
+                                    ),
+                                    (Attribute::aria_hidden.any_attr_const(), "true"),
+                                ]),
+                            )]),
+                    )]),
+            ),
+            NodeBuilder::Element(
+                ElementBuilder::new(Element::td.any_element_const())
+                    .attrs(&[(Attribute::class.any_attr_const(), "col-md-6")]),
+            ),
+        ]);
 
     let tbody = document.get_element_by_id("tbody").expect("tbody");
     let mut msg = MsgChannel::default();
-    msg.run_batch(EL);
-    msg.store_with_id(ROW_ID);
-    msg.flush();
+    msg.build_full_element(EL);
     msg.set_node(TBODY_ID, tbody.into());
 
     let main = RefCell::new(Rc::new(Main {

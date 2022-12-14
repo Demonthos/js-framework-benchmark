@@ -4,7 +4,8 @@
   "description": "Dyo demo",
   "main": "index.js",
   "js-framework-benchmark": {
-    "frameworkVersionFromPackage": "dyo"
+    "frameworkVersionFromPackage": "dyo",
+    "frameworkHomeURL": "https://dyo.js.org/"
   },
   "scripts": {
     "build-dev": "webpack -w -d",

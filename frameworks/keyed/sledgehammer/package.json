@@ -5,8 +5,10 @@
   "license": "ISC",
   "js-framework-benchmark": {
     "frameworkVersion": "1.0.0",
+    "frameworkHomeURL": "https://github.com/demonthos/sledgehammer/",
     "issues": [
-      772
+      772,
+      1139
     ]
   },
   "scripts": {

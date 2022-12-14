@@ -4,7 +4,11 @@
   "description": "React Easy State demo",
   "main": "src/index.jsx",
   "js-framework-benchmark": {
-    "frameworkVersionFromPackage": "react:@risingstack/react-easy-state"
+    "frameworkVersionFromPackage": "react:@risingstack/react-easy-state",
+    "frameworkHomeURL": "https://github.com/RisingStack/react-easy-state",
+    "issues": [
+      1139
+    ]
   },
   "scripts": {
     "build-dev": "webpack -w -d",

@@ -1,8 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
-import axios from "axios";
+import * as axios from "axios";
 import { StartupBenchmarkResult } from "./benchmarksLighthouse";
 import { string } from "yargs";
+
 
 export interface JSONResult {
   framework: string;
@@ -85,6 +86,7 @@ export interface FrameworkData {
   shadowRootName: string | undefined;
   buttonsInShadowRoot: boolean;
   issues: number[];
+  frameworkHomeURL: string;
 }
 
 interface Options {
@@ -109,6 +111,7 @@ export interface FrameworkInformation {
   buttonsInShadowRoot?: boolean;
   versions?: {[key: string]: string};
   frameworkVersionString: string;
+  frameworkHomeURL: string;
 }
 
 export interface IMatchPredicate {
@@ -121,9 +124,11 @@ export async function initializeFrameworks(matchPredicate: IMatchPredicate = mat
   let lsResult ;
   try {
     lsResult = (
-    await axios.get(`http://${config.HOST}:${config.PORT}/ls`)
+      // FIXME https://github.com/axios/axios/issues/5008
+    await (axios as any).get(`http://${config.HOST}:${config.PORT}/ls`)
   ).data;
   } catch (err) {
+    console.log(err);
     console.log(`ERROR loading frameworks from http://${config.HOST}:${config.PORT}/ls. Is the server running?`);
     throw new Error(`ERROR loading frameworks from http://${config.HOST}:${config.PORT}/ls. Is the server running?`);
   }
@@ -142,7 +147,8 @@ export async function initializeFrameworks(matchPredicate: IMatchPredicate = mat
           useRowShadowRoot: !!frameworkVersionInformation.useRowShadowRoot,
           shadowRootName: frameworkVersionInformation.shadowRootName,
           buttonsInShadowRoot: !!frameworkVersionInformation.buttonsInShadowRoot,
-          issues: (frameworkVersionInformation.issues ?? []).map(i => Number(i))
+          issues: (frameworkVersionInformation.issues ?? []).map(i => Number(i)),
+          frameworkHomeURL: frameworkVersionInformation.frameworkHomeURL ?? ""
         });
       }
   }

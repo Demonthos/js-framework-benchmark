@@ -13,6 +13,7 @@ export interface Framework {
     dir: string;
     type: FrameworkType;
     issues: number[];
+    frameworkHomeURL: string;
     displayname: string;
 }
 
@@ -26,11 +27,12 @@ interface Category {
 }
 
 export const categories: Category[] = [
-    { id: 1, text: "[Note]: Manual DOM manipulations", issues: [772], severity: Severity.Note },
-    { id: 2, text: "[Note]:View state on the model", issues: [800], severity: Severity.Note },
-    { id: 3, text: "[Note]: Explicit requestAnimationFrame calls", issues: [796], severity: Severity.Note },
-    { id: 4, text: "[Note]: Manual event delegation", issues: [801], severity: Severity.Note },
-    { id: 5, text: "[Issue]: Errors in the implementation", issues: [634], severity: Severity.Error },
+  {id:1, text:"[Note]: Manual DOM manipulations", issues: [772], severity: Severity.Note},
+  {id:2, text:"[Note]:View state on the model", issues: [800], severity: Severity.Note},
+  {id:3, text:"[Note]: Explicit requestAnimationFrame calls", issues: [796], severity: Severity.Note},
+  {id:4, text:"[Note]: Manual event delegation", issues: [801], severity: Severity.Note},
+  {id:5, text:"[Note]: Implementation uses runtime code generation", issues: [1139], severity: Severity.Note},
+  {id:6, text:"[Issue]: Errors in the implementation", issues: [634], severity: Severity.Error},
 ]
 
 interface IIssue {
@@ -41,11 +43,12 @@ interface IIssue {
 }
 
 export const knownIssues: IIssue[] = [
-    { issue: 634, severity: Severity.Error, text: "[Issue]: The HTML structure for the implementation is not fully correct.", link: "https://github.com/krausest/js-framework-benchmark/issues/634" },
-    { issue: 772, severity: Severity.Note, text: "[Note]: Implementation uses manual DOM manipulations", link: "https://github.com/krausest/js-framework-benchmark/issues/772" },
-    { issue: 796, severity: Severity.Note, text: "[Note]: Implementation uses explicit requestAnimationFrame calls", link: "https://github.com/krausest/js-framework-benchmark/issues/796" },
-    { issue: 800, severity: Severity.Note, text: "[Note]: View state on the model", link: "https://github.com/krausest/js-framework-benchmark/issues/800" },
-    { issue: 801, severity: Severity.Note, text: "[Note]: Implementation uses manual event delegation", link: "https://github.com/krausest/js-framework-benchmark/issues/801" },
+    {issue: 634, severity: Severity.Error, text:"[Issue]: The HTML structure for the implementation is not fully correct.", link: "https://github.com/krausest/js-framework-benchmark/issues/634"},
+    {issue: 772, severity: Severity.Note, text:"[Note]: Implementation uses manual DOM manipulations", link: "https://github.com/krausest/js-framework-benchmark/issues/772"},
+    {issue: 796, severity: Severity.Note, text:"[Note]: Implementation uses explicit requestAnimationFrame calls", link: "https://github.com/krausest/js-framework-benchmark/issues/796"},
+    {issue: 800, severity: Severity.Note, text:"[Note]: View state on the model", link: "https://github.com/krausest/js-framework-benchmark/issues/800"},
+    {issue: 801, severity: Severity.Note, text:"[Note]: Implementation uses manual event delegation", link: "https://github.com/krausest/js-framework-benchmark/issues/801"},
+    {issue: 1139, severity: Severity.Note, text:"[Note]: Implementation uses runtime code generation", link: "https://github.com/krausest/js-framework-benchmark/issues/1139"},
 ];
 
 export function findIssue(issueNumber: number): IIssue | undefined {
@@ -222,8 +225,11 @@ export class ResultTableData {
             }
         })
         this.frameworks = this.allFrameworks.filter(framework => framework.type === type && this.selectedFameworks.has(framework));
-        this.frameworksForFactors = this.allFrameworks.filter(framework => framework.type === type
-            && framework.issues.every(i => allowedIssues.has(i)));
+        this.frameworksForFactors = this.allFrameworks.filter(framework => framework.type === type 
+            && (framework.issues.every(i => allowedIssues.has(i))
+            || (framework.name === 'vanillajs-keyed') || (framework.name === 'vanillajs-1-keyed')
+            || (framework.name === 'vanillajs-non-keyed') || (framework.name === 'vanillajs-1-non-keyed'))
+            );
         this.update(sortKey);
     }
     private update(sortKey: string) {
@@ -334,17 +340,17 @@ export class ResultTableData {
         }
     }
 
-    computeFactors(benchmark: Benchmark): Array<TableResultValueEntry | null> {
+    computeFactors(benchmark: Benchmark): Array<TableResultValueEntry|null> {
         const benchmarkResults = this.frameworksForFactors.map(f => this.results(benchmark, f));
-        const selectFn = (result: Result | null) => {
-            if (result === null) return 0;
+        const selectFn = (result: Result|null) => {
+            if (result===null) return 0;
             if (this.displayMode === DisplayMode.DisplayMedian) {
                 return result.median;
             } else {
                 return result.mean;
             }
         }
-        const min = Math.max(benchmarkResults.reduce((min, result) => result === null ? min : Math.min(min, selectFn(result)), Number.POSITIVE_INFINITY));
+        const min = Math.max(benchmarkResults.reduce((min, result) => result===null ? min : Math.min(min, selectFn(result)), Number.POSITIVE_INFINITY));
         // if (benchmark.type === BenchmarkType.CPU) {
         //     min = Math.max(1000/60, min);
         // }
@@ -353,7 +359,7 @@ export class ResultTableData {
             if (result === null) return null;
 
             const value = selectFn(result);
-            const factor = value / min;
+            const factor = value/min;
             // if (benchmark.type === BenchmarkType.CPU) {
             //     factor = Math.max(1, factor);
             // }    

@@ -4,8 +4,10 @@
   "description": "Benchmark for san composition",
   "js-framework-benchmark": {
     "frameworkVersionFromPackage": "san:san-composition",
+    "frameworkHomeURL": "https://baidu.github.io/san/",
     "issues": [
-      800
+      800,
+      1139
     ]
   },
   "scripts": {
