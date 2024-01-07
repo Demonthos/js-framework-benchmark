@@ -6,13 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dioxus = "0.4"
-dioxus-web = { version = "0.4", default-features = false }
+dioxus = { git = "https://github.com/ealmloff/dioxus", branch = "breaking" }
+dioxus-web = { git = "https://github.com/ealmloff/dioxus", branch = "breaking", default-features = false }
+dioxus-signals = { git = "https://github.com/ealmloff/dioxus", branch = "breaking" }
 js-sys = "*"
-slab = "0.4.8"
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
+rustc-hash = "1.1.0"

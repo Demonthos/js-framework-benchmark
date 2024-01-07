@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
+use dioxus_signals::*;
 use js_sys::Math;
 
 fn random(max: usize) -> usize {
@@ -11,28 +12,28 @@ fn main() {
     dioxus_web::launch(app);
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 struct Label {
     key: usize,
-    label: Tracked<String>,
+    label: Signal<String>,
 }
 
 impl Label {
-    fn new(cx: &ScopeState, num: usize, label: String) -> Self {
+    fn new(num: usize, label: String) -> Self {
         Label {
             key: num,
-            label: Tracked::new(cx, label),
+            label: Signal::new(label),
         }
     }
 
-    fn new_list(cx: &ScopeState, num: usize, key_from: usize) -> Vec<Self> {
+    fn new_list(num: usize, key_from: usize) -> Vec<Self> {
         let mut labels = Vec::with_capacity(num);
-        append(cx, &mut labels, num, key_from);
+        append(&mut labels, num, key_from);
         labels
     }
 }
 
-fn append(cx: &ScopeState,list: &mut Vec<Label>, num: usize, key_from: usize) {
+fn append(list: &mut Vec<Label>, num: usize, key_from: usize) {
     list.reserve_exact(num);
     for x in 0..num {
         let adjective = ADJECTIVES[random(ADJECTIVES.len())];
@@ -44,7 +45,7 @@ fn append(cx: &ScopeState,list: &mut Vec<Label>, num: usize, key_from: usize) {
         label.push_str(colour);
         label.push(' ');
         label.push_str(noun);
-        list.push(Label::new(cx, x + key_from, label));
+        list.push(Label::new(x + key_from, label));
     }
 }
 
@@ -55,23 +56,23 @@ struct LabelsContainer {
 }
 
 impl LabelsContainer {
-    fn new(cx: &ScopeState,num: usize, last_key: usize) -> LabelsContainer {
-        let labels = Label::new_list(cx, num, last_key + 1);
+    fn new(num: usize, last_key: usize) -> LabelsContainer {
+        let labels = Label::new_list(num, last_key + 1);
         LabelsContainer {
             labels,
             last_key: last_key + num,
         }
     }
 
-    fn append(&mut self, cx: &ScopeState,num: usize) {
+    fn append(&mut self, num: usize) {
         self.labels.reserve(num);
-        append(cx, &mut self.labels, num, self.last_key + 1);
+        append(&mut self.labels, num, self.last_key + 1);
         self.last_key += num;
     }
 
-    fn overwrite(&mut self,cx: &ScopeState,  num: usize) {
+    fn overwrite(&mut self, num: usize) {
         self.labels.clear();
-        append(cx, &mut self.labels, num, self.last_key + 1);
+        append(&mut self.labels, num, self.last_key + 1);
         self.last_key += num;
     }
 
@@ -88,10 +89,29 @@ impl LabelsContainer {
     }
 }
 
-fn app(cx: Scope) -> Element {
-    let labels_container = use_ref(&cx, || LabelsContainer::new(cx, 0, 0));
-    let selected: &Tracked<Option<usize>> = cx.use_hook(||{
-        Tracked::new(&cx, None)
+fn app(_: ()) -> Element {
+    let labels_container = use_signal(|| LabelsContainer::new(0, 0));
+    let selected: Signal<Option<usize>> = use_signal(|| None);
+    let prev_selected: Signal<Option<usize>> = use_signal(|| None);
+    let selected_selector: Signal<rustc_hash::FxHashMap<usize, Signal<bool>>> = use_signal(Default::default);
+    dioxus_signals::use_effect(move || {
+        let currently_selected = selected.value();
+        let selected_selector = selected_selector.read();
+        let mut prev_selected = prev_selected.write();
+        {
+            let prev_selected = *prev_selected;
+            if let Some(prev_selected) = prev_selected {
+                if let Some(is_selected) = selected_selector.get(&prev_selected) {
+                    is_selected.set(false);
+                }
+            }
+        }
+        if let Some(currently_selected) = currently_selected {
+            if let Some(is_selected) = selected_selector.get(&currently_selected) {
+                is_selected.set(true);
+            }
+        }
+        *prev_selected = currently_selected;
     });
 
     render! {
@@ -102,24 +122,24 @@ fn app(cx: Scope) -> Element {
                     div { class: "col-md-6",
                         div { class: "row",
                             ActionButton { name: "Create 1,000 rows", id: "run",
-                                onclick: move |_| labels_container.write().overwrite(cx, 1_000),
+                                onclick: move |_| labels_container.write().overwrite(1_000),
                             }
                             ActionButton { name: "Create 10,000 rows", id: "runlots",
-                                onclick: move |_| labels_container.write().overwrite(cx, 10_000),
+                                onclick: move |_| labels_container.write().overwrite(10_000),
                             }
                             ActionButton { name: "Append 1,000 rows", id: "add",
-                                onclick: move |_| labels_container.write().append(cx, 1_000),
+                                onclick: move |_| labels_container.write().append(1_000),
                             }
                             ActionButton { name: "Update every 10th row", id: "update",
                                 onclick: move |_| {
-                                    let labels = labels_container.read();
+                                    let labels = labels_container();
                                     for i in 0..(labels.labels.len()/10) {
                                         *labels.labels[i*10].label.write() += " !!!";
                                     }
                                 },
                             }
                             ActionButton { name: "Clear", id: "clear",
-                                onclick: move |_| labels_container.write().overwrite(cx, 0),
+                                onclick: move |_| labels_container.write().overwrite(0),
                             }
                             ActionButton { name: "Swap rows", id: "swaprows",
                                 onclick: move |_| labels_container.write().swap(1, 998),
@@ -131,12 +151,25 @@ fn app(cx: Scope) -> Element {
 
             table { class: "table table-hover table-striped test-data",
                 tbody { id: "tbody",
-                    labels_container.read().labels.iter().map(|item| {
-                        rsx! {
+                    labels_container().labels.iter().map(|item| {
+                        render! {
                             Row {
                                 label: item.clone(),
                                 labels: labels_container.clone(),
                                 selected_row: selected.clone(),
+                                is_in_danger: {
+                                    let read_selected_selector = selected_selector.read();
+                                    match read_selected_selector.get(&item.key) {
+                                        Some(is_selected) => *is_selected,
+                                        None => {
+                                            drop(read_selected_selector);
+                                            let mut selected_selector = selected_selector.write();
+                                            let is_selected = Signal::new(false);
+                                            selected_selector.insert(item.key, is_selected);
+                                            is_selected
+                                        }
+                                    }
+                                },
                                 key: "{item.key}"
                             }
                         }
@@ -149,11 +182,12 @@ fn app(cx: Scope) -> Element {
     }
 }
 
-#[derive(Props)]
+#[derive(Copy, Clone, Props)]
 struct RowProps {
     label: Label,
-    labels: UseRef<LabelsContainer>,
-    selected_row: Tracked<Option<usize>>,
+    labels: Signal<LabelsContainer>,
+    selected_row: Signal<Option<usize>>,
+    is_in_danger: Signal<bool>
 }
 
 impl PartialEq for RowProps {
@@ -162,35 +196,26 @@ impl PartialEq for RowProps {
     }
 }
 
-fn Row(cx: Scope<RowProps>) -> Element {
+fn Row(props: RowProps) -> Element {
     let RowProps {
         label,
         labels,
         selected_row,
-    } = &cx.props;
-    let label_text = use_selector(&cx, &label.label, |label| label.clone());
-    let key = label.key;
-    let is_in_danger = use_selector(&cx, selected_row, move |selected_row: &Option<usize>| {
-        let result = match selected_row {
-            Some(selected_row) => {
-                if *selected_row == key {
-                    "danger"
-                } else {
-                    ""
-                }
-            }
-            None => "",
-        };
-        result
-    });
+        is_in_danger
+    } = props;
+    let is_in_danger = if is_in_danger.value() {
+        "danger"
+    } else {
+        ""
+    };
 
     render! {
-        tr { class: is_in_danger,
+        tr { class: "{is_in_danger}",
             td { class:"col-md-1", "{label.key}" }
             td { class:"col-md-4", onclick: move |_| {
-                    *selected_row.write() = Some(label.key)
+                    selected_row.set(Some(label.key))
                 },
-                a { class: "lbl", "{label_text}" }
+                a { class: "lbl", "{label.label}" }
             }
             td { class: "col-md-1",
                 a { class: "remove", onclick: move |_| labels.write().remove(label.key),
@@ -202,12 +227,20 @@ fn Row(cx: Scope<RowProps>) -> Element {
     }
 }
 
-#[inline_props]
-fn ActionButton<'a>(
-    cx: Scope<'a, ActionButtonProps>,
+
+#[derive(Clone, Props, PartialEq)]
+struct ActionButtonProps {
     name: &'static str,
     id: &'static str,
-    onclick: EventHandler<'a>,
+    onclick: EventHandler,
+}
+
+fn ActionButton(
+    ActionButtonProps {
+        name,
+        id,
+        onclick,
+    }: ActionButtonProps,
 ) -> Element {
     render! {
         div {
@@ -215,7 +248,7 @@ fn ActionButton<'a>(
             button {
                 class:"btn btn-primary btn-block",
                 r#type: "button",
-                id: *id,
+                id: id.to_string(),
                 onclick: move |_| onclick.call(()),
                 *name
             }

@@ -42,9 +42,12 @@
   "license": "ISC",
   "homepage": "https://github.com/krausest/js-framework-benchmark",
   "dependencies": {
+    "@fastify/view": "^8.2.0",
     "adm-zip": "^0.5.10",
     "commander": "^11.0.0",
     "cross-env": "^7.0.3",
+    "ejs": "^3.1.9",
+    "fastify": "^4.24.3",
     "json5": "^2.2.3",
     "rimraf": "^5.0.5",
     "yargs": "^17.7.2"
